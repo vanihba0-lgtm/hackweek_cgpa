@@ -1,13 +1,13 @@
-// 10-Point Grade Scale definition
+// 10-Point Grade Scale definition (CBIT B.E. R20/R22 Regulations)
 const GRADE_POINTS = {
-    'O': 10,
-    'A+': 9,
-    'A': 8,
-    'B+': 7,
-    'B': 6,
-    'C': 5,
-    'P': 4,
-    'F': 0
+    'S': 10,
+    'A': 9,
+    'B': 8,
+    'C': 7,
+    'D': 6,
+    'E': 5,
+    'F': 0,
+    'Ab': 0
 };
 
 // Default State Configuration
@@ -17,9 +17,9 @@ const DEFAULT_STATE = {
             id: 'sem-1',
             name: 'Semester 1',
             courses: [
-                { id: 'c-1', name: 'Mathematics I', credits: 4, grade: 'A+' },
+                { id: 'c-1', name: 'Mathematics I', credits: 4, grade: 'S' },
                 { id: 'c-2', name: 'Physics I', credits: 3, grade: 'A' },
-                { id: 'c-3', name: 'Programming Lab', credits: 2, grade: 'O' }
+                { id: 'c-3', name: 'Programming Lab', credits: 2, grade: 'B' }
             ]
         }
     ],
