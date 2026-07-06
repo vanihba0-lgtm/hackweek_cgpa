@@ -351,6 +351,12 @@ function renderSingleSemesterCard(sem, isSimulated) {
 
 // Add Semester Event Listener
 addSemesterBtn.addEventListener('click', () => {
+    const totalSemsCount = state.semesters.length + (state.isWhatIfActive ? simulatedSemesters.length : 0);
+    if (totalSemsCount >= 8) {
+        showToast('Maximum limit of 8 semesters reached', 'error');
+        return;
+    }
+
     const semNumber = state.semesters.length + 1;
     const newSem = {
         id: `sem-${Date.now()}`,
@@ -368,7 +374,13 @@ addSemesterBtn.addEventListener('click', () => {
 
 // Add Simulated Semester Event Listener
 addSimulatedSemBtn.addEventListener('click', () => {
-    const totalSems = state.semesters.length + simulatedSemesters.length + 1;
+    const totalSemsCount = state.semesters.length + simulatedSemesters.length;
+    if (totalSemsCount >= 8) {
+        showToast('Maximum limit of 8 semesters reached', 'error');
+        return;
+    }
+
+    const totalSems = totalSemsCount + 1;
     const newSimSem = {
         id: `sim-sem-${Date.now()}`,
         name: `Sim Semester ${totalSems}`,
