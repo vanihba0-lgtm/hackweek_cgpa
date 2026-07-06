@@ -23,13 +23,14 @@ const DEFAULT_STATE = {
             ]
         }
     ],
-    isWhatIfActive: false,
-    whatIfTarget: null,
-    whatIfCredits: null
+    isWhatIfActive: false
 };
 
-// Application State Object
+// Application State Object (Saved permanently to localStorage)
 let state = JSON.parse(localStorage.getItem('cgpa_state')) || JSON.parse(JSON.stringify(DEFAULT_STATE));
+
+// Temporary simulated semesters in memory (not saved to localStorage)
+let simulatedSemesters = [];
 
 // Save state helper
 function saveState() {
@@ -62,6 +63,7 @@ function calculateCGPA() {
     let totalCredits = 0;
     let semestersCount = 0;
     
+    // Always calculate completed semesters first
     state.semesters.forEach(sem => {
         let semCredits = 0;
         let semPoints = 0;
@@ -83,15 +85,46 @@ function calculateCGPA() {
         }
     });
     
+    const actualCgpa = totalCredits > 0 ? (totalPoints / totalCredits) : 0;
+    const actualCredits = totalCredits;
+    const actualSemestersCount = semestersCount;
+
+    // Inject temporary simulated semesters if What-If mode is active
+    if (state.isWhatIfActive) {
+        simulatedSemesters.forEach(sem => {
+            let semCredits = 0;
+            let semPoints = 0;
+            
+            sem.courses.forEach(course => {
+                const credits = parseFloat(course.credits);
+                const gradePoint = GRADE_POINTS[course.grade];
+                
+                if (!isNaN(credits) && credits > 0 && gradePoint !== undefined) {
+                    semPoints += gradePoint * credits;
+                    semCredits += credits;
+                }
+            });
+            
+            if (semCredits > 0) {
+                totalPoints += semPoints;
+                totalCredits += semCredits;
+                semestersCount++;
+            }
+        });
+    }
+    
     const cgpa = totalCredits > 0 ? (totalPoints / totalCredits) : 0;
     return {
         cgpa: parseFloat(cgpa.toFixed(2)),
         totalCredits,
-        semestersCount
+        semestersCount,
+        actualCgpa,
+        actualCredits,
+        actualSemestersCount
     };
 }
 
-// DOM Rendering logic
+// DOM Rendering elements
 const semestersContainer = document.getElementById('semesters-container');
 const displayCGPA = document.getElementById('display-cgpa');
 const displayCredits = document.getElementById('display-credits');
@@ -100,12 +133,10 @@ const gaugeProgress = document.getElementById('gauge-progress');
 const addSemesterBtn = document.getElementById('add-semester-btn');
 const whatIfToggle = document.getElementById('what-if-toggle');
 const whatIfControls = document.getElementById('what-if-controls');
+const addSimulatedSemBtn = document.getElementById('add-simulated-sem-btn');
 const targetCgpaInput = document.getElementById('target-cgpa');
 const futureCreditsInput = document.getElementById('future-credits');
 const whatIfResults = document.getElementById('what-if-results');
-
-const importBtn = document.getElementById('import-btn');
-const exportBtn = document.getElementById('export-btn');
 const resetBtn = document.getElementById('reset-btn');
 
 // Initialize SVG Gauge Gradient
@@ -147,7 +178,7 @@ function showToast(message, type = 'info') {
 
 // Update the CGPA visual elements
 function updateStatsUI() {
-    const { cgpa, totalCredits, semestersCount } = calculateCGPA();
+    const { cgpa, totalCredits, semestersCount, actualCgpa, actualCredits } = calculateCGPA();
     
     // Display textual stats
     displayCGPA.textContent = cgpa.toFixed(2);
@@ -156,17 +187,16 @@ function updateStatsUI() {
     
     // Update SVG progress circle
     const maxOffset = 339.29; // 2 * PI * r (r=54)
-    // Scale cgpa (0 to 10) to progress circle offset
     const percentage = cgpa / 10;
     const offset = maxOffset - (percentage * maxOffset);
     gaugeProgress.style.strokeDashoffset = offset;
     
-    // Recalculate What-If simulations
-    runWhatIfSimulation(cgpa, totalCredits);
+    // Recalculate Target What-If calculations
+    runWhatIfTargetGoal(actualCgpa, actualCredits);
 }
 
-// What-If Simulation logic
-function runWhatIfSimulation(currentCgpa, currentCredits) {
+// Target Goal Calculator (using completed semesters stats)
+function runWhatIfTargetGoal(currentCgpa, currentCredits) {
     if (!state.isWhatIfActive) return;
     
     const target = parseFloat(targetCgpaInput.value);
@@ -234,74 +264,89 @@ function runWhatIfSimulation(currentCgpa, currentCredits) {
 function renderSemesters() {
     semestersContainer.innerHTML = '';
     
-    state.semesters.forEach((sem, semIdx) => {
-        const semCard = document.createElement('div');
-        semCard.className = 'semester-card';
-        semCard.dataset.id = sem.id;
-        
-        const sgpa = calculateSGPA(sem);
-        
-        semCard.innerHTML = `
-            <div class="semester-card-header">
-                <div class="sem-title-area">
-                    <input type="text" class="sem-title-input" value="${sem.name}" data-sem-id="${sem.id}">
-                    <span class="sem-badge completed">Completed</span>
+    // Render actual semesters
+    state.semesters.forEach((sem) => {
+        renderSingleSemesterCard(sem, false);
+    });
+
+    // Render simulated semesters if what-if mode is active
+    if (state.isWhatIfActive) {
+        simulatedSemesters.forEach((sem) => {
+            renderSingleSemesterCard(sem, true);
+        });
+    }
+    
+    updateStatsUI();
+}
+
+function renderSingleSemesterCard(sem, isSimulated) {
+    const semCard = document.createElement('div');
+    semCard.className = `semester-card ${isSimulated ? 'what-if-sem' : ''}`;
+    semCard.dataset.id = sem.id;
+    semCard.dataset.simulated = isSimulated;
+    
+    const sgpa = calculateSGPA(sem);
+    const badgeText = isSimulated ? 'Simulated' : 'Completed';
+    const badgeClass = isSimulated ? 'simulated' : 'completed';
+    
+    semCard.innerHTML = `
+        <div class="semester-card-header">
+            <div class="sem-title-area">
+                <input type="text" class="sem-title-input" value="${sem.name}" data-sem-id="${sem.id}" data-simulated="${isSimulated}">
+                <span class="sem-badge ${badgeClass}">${badgeText}</span>
+            </div>
+            <div class="sem-actions">
+                <div class="sem-gpa-badge">
+                    <span>SGPA:</span>
+                    <span class="gpa-val">${sgpa.toFixed(2)}</span>
                 </div>
-                <div class="sem-actions">
-                    <div class="sem-gpa-badge">
-                        <span>SGPA:</span>
-                        <span class="gpa-val">${sgpa.toFixed(2)}</span>
-                    </div>
-                    <button class="btn btn-secondary btn-icon-only delete-sem-btn" data-sem-id="${sem.id}" title="Delete Semester">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
-                </div>
+                <button class="btn btn-secondary btn-icon-only delete-sem-btn" data-sem-id="${sem.id}" data-simulated="${isSimulated}" title="Delete Semester">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
             </div>
+        </div>
+        
+        <div class="courses-table-header">
+            <span>Subject Name</span>
+            <span>Credits</span>
+            <span>Grade</span>
+            <span></span>
+        </div>
+        
+        <div class="courses-list-rows" id="courses-${sem.id}">
+            <!-- Courses injected here -->
+        </div>
+        
+        <button class="btn btn-secondary add-course-btn" data-sem-id="${sem.id}" data-simulated="${isSimulated}" style="align-self: flex-start; margin-top: 0.5rem;">
+            <i class="fa-solid fa-plus"></i> Add Subject
+        </button>
+    `;
+    
+    semestersContainer.appendChild(semCard);
+    
+    // Render Course list inside this semester
+    const coursesList = document.getElementById(`courses-${sem.id}`);
+    sem.courses.forEach((course) => {
+        const courseRow = document.createElement('div');
+        courseRow.className = 'course-row';
+        courseRow.dataset.courseId = course.id;
+        
+        courseRow.innerHTML = `
+            <input type="text" class="input-field course-name-input" value="${course.name}" placeholder="e.g. Science" data-sem-id="${sem.id}" data-course-id="${course.id}" data-simulated="${isSimulated}">
             
-            <div class="courses-table-header">
-                <span>Subject Name</span>
-                <span>Credits</span>
-                <span>Grade</span>
-                <span></span>
-            </div>
+            <input type="number" class="input-field course-credits-input" value="${course.credits}" min="1" max="100" step="0.5" placeholder="Credits" data-sem-id="${sem.id}" data-course-id="${course.id}" data-simulated="${isSimulated}">
             
-            <div class="courses-list-rows" id="courses-${sem.id}">
-                <!-- Courses injected here -->
-            </div>
+            <select class="input-field course-grade-select" data-sem-id="${sem.id}" data-course-id="${course.id}" data-simulated="${isSimulated}">
+                ${Object.keys(GRADE_POINTS).map(g => `<option value="${g}" ${course.grade === g ? 'selected' : ''}>${g} (${GRADE_POINTS[g]})</option>`).join('')}
+            </select>
             
-            <button class="btn btn-secondary add-course-btn" data-sem-id="${sem.id}" style="align-self: flex-start; margin-top: 0.5rem;">
-                <i class="fa-solid fa-plus"></i> Add Subject
+            <button class="btn btn-secondary btn-icon-only delete-course-btn" data-sem-id="${sem.id}" data-course-id="${course.id}" data-simulated="${isSimulated}" title="Remove Subject">
+                <i class="fa-solid fa-xmark"></i>
             </button>
         `;
         
-        semestersContainer.appendChild(semCard);
-        
-        // Render Course list inside this semester
-        const coursesList = document.getElementById(`courses-${sem.id}`);
-        sem.courses.forEach((course) => {
-            const courseRow = document.createElement('div');
-            courseRow.className = 'course-row';
-            courseRow.dataset.courseId = course.id;
-            
-            courseRow.innerHTML = `
-                <input type="text" class="input-field course-name-input" value="${course.name}" placeholder="e.g. Science" data-sem-id="${sem.id}" data-course-id="${course.id}">
-                
-                <input type="number" class="input-field course-credits-input" value="${course.credits}" min="1" max="100" step="0.5" placeholder="Credits" data-sem-id="${sem.id}" data-course-id="${course.id}">
-                
-                <select class="input-field course-grade-select" data-sem-id="${sem.id}" data-course-id="${course.id}">
-                    ${Object.keys(GRADE_POINTS).map(g => `<option value="${g}" ${course.grade === g ? 'selected' : ''}>${g} (${GRADE_POINTS[g]})</option>`).join('')}
-                </select>
-                
-                <button class="btn btn-secondary btn-icon-only delete-course-btn" data-sem-id="${sem.id}" data-course-id="${course.id}" title="Remove Subject">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            `;
-            
-            coursesList.appendChild(courseRow);
-        });
+        coursesList.appendChild(courseRow);
     });
-    
-    updateStatsUI();
 }
 
 // Add Semester Event Listener
@@ -311,7 +356,7 @@ addSemesterBtn.addEventListener('click', () => {
         id: `sem-${Date.now()}`,
         name: `Semester ${semNumber}`,
         courses: [
-            { id: `c-${Date.now()}-1`, name: '', credits: 3, grade: 'A+' }
+            { id: `c-${Date.now()}-1`, name: '', credits: 3, grade: 'A' }
         ]
     };
     
@@ -321,14 +366,36 @@ addSemesterBtn.addEventListener('click', () => {
     showToast('New semester added successfully', 'success');
 });
 
+// Add Simulated Semester Event Listener
+addSimulatedSemBtn.addEventListener('click', () => {
+    const totalSems = state.semesters.length + simulatedSemesters.length + 1;
+    const newSimSem = {
+        id: `sim-sem-${Date.now()}`,
+        name: `Sim Semester ${totalSems}`,
+        courses: [
+            { id: `c-${Date.now()}-1`, name: '', credits: 3, grade: 'A' }
+        ]
+    };
+    
+    simulatedSemesters.push(newSimSem);
+    renderSemesters();
+    showToast('Simulated semester injected', 'success');
+});
+
 // Dynamic Container Event Delegation for performance
 semestersContainer.addEventListener('click', (e) => {
     // Delete Semester
     const deleteSemBtn = e.target.closest('.delete-sem-btn');
     if (deleteSemBtn) {
         const semId = deleteSemBtn.dataset.semId;
-        state.semesters = state.semesters.filter(sem => sem.id !== semId);
-        saveState();
+        const isSim = deleteSemBtn.dataset.simulated === 'true';
+        
+        if (isSim) {
+            simulatedSemesters = simulatedSemesters.filter(sem => sem.id !== semId);
+        } else {
+            state.semesters = state.semesters.filter(sem => sem.id !== semId);
+            saveState();
+        }
         renderSemesters();
         showToast('Semester removed', 'info');
         return;
@@ -338,7 +405,10 @@ semestersContainer.addEventListener('click', (e) => {
     const addCourseBtn = e.target.closest('.add-course-btn');
     if (addCourseBtn) {
         const semId = addCourseBtn.dataset.semId;
-        const sem = state.semesters.find(s => s.id === semId);
+        const isSim = addCourseBtn.dataset.simulated === 'true';
+        const semList = isSim ? simulatedSemesters : state.semesters;
+        const sem = semList.find(s => s.id === semId);
+        
         if (sem) {
             sem.courses.push({
                 id: `c-${Date.now()}`,
@@ -346,7 +416,7 @@ semestersContainer.addEventListener('click', (e) => {
                 credits: 3,
                 grade: 'A'
             });
-            saveState();
+            if (!isSim) saveState();
             renderSemesters();
         }
         return;
@@ -357,10 +427,13 @@ semestersContainer.addEventListener('click', (e) => {
     if (deleteCourseBtn) {
         const semId = deleteCourseBtn.dataset.semId;
         const courseId = deleteCourseBtn.dataset.courseId;
-        const sem = state.semesters.find(s => s.id === semId);
+        const isSim = deleteCourseBtn.dataset.simulated === 'true';
+        const semList = isSim ? simulatedSemesters : state.semesters;
+        const sem = semList.find(s => s.id === semId);
+        
         if (sem) {
             sem.courses = sem.courses.filter(c => c.id !== courseId);
-            saveState();
+            if (!isSim) saveState();
             renderSemesters();
         }
         return;
@@ -370,14 +443,16 @@ semestersContainer.addEventListener('click', (e) => {
 // Input updates handling
 semestersContainer.addEventListener('input', (e) => {
     const target = e.target;
+    const isSim = target.dataset.simulated === 'true';
+    const semList = isSim ? simulatedSemesters : state.semesters;
     
     // Edit Semester Title
     if (target.classList.contains('sem-title-input')) {
         const semId = target.dataset.semId;
-        const sem = state.semesters.find(s => s.id === semId);
+        const sem = semList.find(s => s.id === semId);
         if (sem) {
             sem.name = target.value;
-            saveState();
+            if (!isSim) saveState();
         }
         return;
     }
@@ -386,12 +461,12 @@ semestersContainer.addEventListener('input', (e) => {
     if (target.classList.contains('course-name-input')) {
         const semId = target.dataset.semId;
         const courseId = target.dataset.courseId;
-        const sem = state.semesters.find(s => s.id === semId);
+        const sem = semList.find(s => s.id === semId);
         if (sem) {
             const course = sem.courses.find(c => c.id === courseId);
             if (course) {
                 course.name = target.value;
-                saveState();
+                if (!isSim) saveState();
             }
         }
         return;
@@ -408,12 +483,12 @@ semestersContainer.addEventListener('input', (e) => {
             return;
         }
         
-        const sem = state.semesters.find(s => s.id === semId);
+        const sem = semList.find(s => s.id === semId);
         if (sem) {
             const course = sem.courses.find(c => c.id === courseId);
             if (course) {
                 course.credits = value;
-                saveState();
+                if (!isSim) saveState();
                 
                 // Real-time calculation updating UI immediately
                 const sgpaBadgeVal = document.querySelector(`[data-id="${semId}"] .gpa-val`);
@@ -433,13 +508,15 @@ semestersContainer.addEventListener('change', (e) => {
     if (target.classList.contains('course-grade-select')) {
         const semId = target.dataset.semId;
         const courseId = target.dataset.courseId;
+        const isSim = target.dataset.simulated === 'true';
+        const semList = isSim ? simulatedSemesters : state.semesters;
         
-        const sem = state.semesters.find(s => s.id === semId);
+        const sem = semList.find(s => s.id === semId);
         if (sem) {
             const course = sem.courses.find(c => c.id === courseId);
             if (course) {
                 course.grade = target.value;
-                saveState();
+                if (!isSim) saveState();
                 
                 // Real-time calculation updating UI immediately
                 const sgpaBadgeVal = document.querySelector(`[data-id="${semId}"] .gpa-val`);
@@ -462,8 +539,9 @@ whatIfToggle.addEventListener('change', (e) => {
     } else {
         whatIfControls.classList.add('disabled');
         whatIfResults.classList.add('hidden');
+        simulatedSemesters = []; // Clear simulated semesters instantly to avoid overriding actual data
     }
-    updateStatsUI();
+    renderSemesters();
 });
 
 // Target CGPA and Future Credits events
@@ -484,56 +562,6 @@ futureCreditsInput.addEventListener('input', () => {
     updateStatsUI();
 });
 
-// Import / Export / Reset Action Listeners
-exportBtn.addEventListener('click', () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", "cgpa_calculator_backup.json");
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
-    showToast('State exported successfully', 'success');
-});
-
-importBtn.addEventListener('click', () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'application/json';
-    
-    input.onchange = e => {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.readAsText(file,'UTF-8');
-        
-        reader.onload = readerEvent => {
-            try {
-                const content = JSON.parse(readerEvent.target.result);
-                if (content && Array.isArray(content.semesters)) {
-                    state = content;
-                    saveState();
-                    renderSemesters();
-                    
-                    // Sync checkbox UI
-                    whatIfToggle.checked = state.isWhatIfActive || false;
-                    if (state.isWhatIfActive) {
-                        whatIfControls.classList.remove('disabled');
-                    } else {
-                        whatIfControls.classList.add('disabled');
-                    }
-                    
-                    showToast('Data imported successfully', 'success');
-                } else {
-                    showToast('Invalid backup file structure', 'error');
-                }
-            } catch (err) {
-                showToast('Failed to parse file', 'error');
-            }
-        }
-    }
-    input.click();
-});
-
 resetBtn.addEventListener('click', () => {
     if (confirm('Are you sure you want to clear all semesters? This action is irreversible.')) {
         state = JSON.parse(JSON.stringify(DEFAULT_STATE));
@@ -545,6 +573,7 @@ resetBtn.addEventListener('click', () => {
         whatIfResults.classList.add('hidden');
         targetCgpaInput.value = '';
         futureCreditsInput.value = '';
+        simulatedSemesters = [];
         
         renderSemesters();
         showToast('All semesters reset', 'info');

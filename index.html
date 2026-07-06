@@ -30,12 +30,6 @@
                 </div>
             </div>
             <div class="header-actions">
-                <button id="import-btn" class="btn btn-secondary" title="Import Data">
-                    <i class="fa-solid fa-file-import"></i> <span>Import</span>
-                </button>
-                <button id="export-btn" class="btn btn-secondary" title="Export Data">
-                    <i class="fa-solid fa-file-export"></i> <span>Export</span>
-                </button>
                 <button id="reset-btn" class="btn btn-danger-outline" title="Reset All">
                     <i class="fa-solid fa-trash-can"></i> <span>Reset</span>
                 </button>
@@ -97,9 +91,13 @@
                             <span class="slider round"></span>
                         </label>
                     </div>
-                    <p class="description">Project your future CGPA by simulating upcoming semesters without changing your completed records.</p>
+                    <p class="description">Project your potential final CGPA by simulating grades for future semesters temporarily without changing actual data.</p>
                     
                     <div id="what-if-controls" class="what-if-controls disabled">
+                        <button id="add-simulated-sem-btn" class="btn btn-secondary" style="width: 100%; justify-content: center; margin-bottom: 1rem;">
+                            <i class="fa-solid fa-plus"></i> Add Simulated Semester
+                        </button>
+                        
                         <div class="simulation-inputs">
                             <div class="input-group">
                                 <label for="target-cgpa">Target CGPA Goal</label>
