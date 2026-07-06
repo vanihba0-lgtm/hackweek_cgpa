@@ -1,4 +1,3 @@
-// 10-Point Grade Scale definition (CBIT B.E. R20/R22 Regulations)
 const GRADE_POINTS = {
     'S': 10,
     'A': 9,
@@ -10,7 +9,6 @@ const GRADE_POINTS = {
     'Ab': 0
 };
 
-// Default State Configuration
 const DEFAULT_STATE = {
     semesters: [
         {
@@ -26,18 +24,13 @@ const DEFAULT_STATE = {
     isWhatIfActive: false
 };
 
-// Application State Object (Saved permanently to localStorage)
 let state = JSON.parse(localStorage.getItem('cgpa_state')) || JSON.parse(JSON.stringify(DEFAULT_STATE));
-
-// Temporary simulated semesters in memory (not saved to localStorage)
 let simulatedSemesters = [];
 
-// Save state helper
 function saveState() {
     localStorage.setItem('cgpa_state', JSON.stringify(state));
 }
 
-// Calculate SGPA for a single semester
 function calculateSGPA(semester) {
     if (!semester.courses || semester.courses.length === 0) return 0;
     
@@ -57,13 +50,11 @@ function calculateSGPA(semester) {
     return totalCredits > 0 ? (totalPoints / totalCredits) : 0;
 }
 
-// Calculate cumulative CGPA and total credits
 function calculateCGPA() {
     let totalPoints = 0;
     let totalCredits = 0;
     let semestersCount = 0;
     
-    // Always calculate completed semesters first
     state.semesters.forEach(sem => {
         let semCredits = 0;
         let semPoints = 0;
@@ -89,7 +80,6 @@ function calculateCGPA() {
     const actualCredits = totalCredits;
     const actualSemestersCount = semestersCount;
 
-    // Inject temporary simulated semesters if What-If mode is active
     if (state.isWhatIfActive) {
         simulatedSemesters.forEach(sem => {
             let semCredits = 0;
@@ -124,7 +114,6 @@ function calculateCGPA() {
     };
 }
 
-// DOM Rendering elements
 const semestersContainer = document.getElementById('semesters-container');
 const displayCGPA = document.getElementById('display-cgpa');
 const displayCredits = document.getElementById('display-credits');
@@ -139,7 +128,6 @@ const futureCreditsInput = document.getElementById('future-credits');
 const whatIfResults = document.getElementById('what-if-results');
 const resetBtn = document.getElementById('reset-btn');
 
-// Initialize SVG Gauge Gradient
 const svg = document.querySelector('.gauge-svg');
 if (svg) {
     const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
@@ -152,7 +140,6 @@ if (svg) {
     svg.appendChild(defs);
 }
 
-// Toast Notifications Helper
 function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
@@ -169,33 +156,27 @@ function showToast(message, type = 'info') {
     
     container.appendChild(toast);
     
-    // Auto-remove after 3 seconds
     setTimeout(() => {
         toast.style.animation = 'slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) reverse';
         setTimeout(() => toast.remove(), 300);
     }, 3000);
 }
 
-// Update the CGPA visual elements
 function updateStatsUI() {
     const { cgpa, totalCredits, semestersCount, actualCgpa, actualCredits } = calculateCGPA();
     
-    // Display textual stats
     displayCGPA.textContent = cgpa.toFixed(2);
     displayCredits.textContent = totalCredits;
     displaySemestersCount.textContent = semestersCount;
     
-    // Update SVG progress circle
-    const maxOffset = 339.29; // 2 * PI * r (r=54)
+    const maxOffset = 339.29;
     const percentage = cgpa / 10;
     const offset = maxOffset - (percentage * maxOffset);
     gaugeProgress.style.strokeDashoffset = offset;
     
-    // Recalculate Target What-If calculations
     runWhatIfTargetGoal(actualCgpa, actualCredits);
 }
 
-// Target Goal Calculator (using completed semesters stats)
 function runWhatIfTargetGoal(currentCgpa, currentCredits) {
     if (!state.isWhatIfActive) return;
     
@@ -260,16 +241,13 @@ function runWhatIfTargetGoal(currentCgpa, currentCredits) {
     }
 }
 
-// Render dynamic elements
 function renderSemesters() {
     semestersContainer.innerHTML = '';
     
-    // Render actual semesters
     state.semesters.forEach((sem) => {
         renderSingleSemesterCard(sem, false);
     });
 
-    // Render simulated semesters if what-if mode is active
     if (state.isWhatIfActive) {
         simulatedSemesters.forEach((sem) => {
             renderSingleSemesterCard(sem, true);
@@ -314,7 +292,6 @@ function renderSingleSemesterCard(sem, isSimulated) {
         </div>
         
         <div class="courses-list-rows" id="courses-${sem.id}">
-            <!-- Courses injected here -->
         </div>
         
         <button class="btn btn-secondary add-course-btn" data-sem-id="${sem.id}" data-simulated="${isSimulated}" style="align-self: flex-start; margin-top: 0.5rem;">
@@ -324,7 +301,6 @@ function renderSingleSemesterCard(sem, isSimulated) {
     
     semestersContainer.appendChild(semCard);
     
-    // Render Course list inside this semester
     const coursesList = document.getElementById(`courses-${sem.id}`);
     sem.courses.forEach((course) => {
         const courseRow = document.createElement('div');
@@ -349,8 +325,13 @@ function renderSingleSemesterCard(sem, isSimulated) {
     });
 }
 
-// Add Semester Event Listener
 addSemesterBtn.addEventListener('click', () => {
+    const totalSemsCount = state.semesters.length + (state.isWhatIfActive ? simulatedSemesters.length : 0);
+    if (totalSemsCount >= 8) {
+        showToast('Maximum limit of 8 semesters reached', 'error');
+        return;
+    }
+
     const semNumber = state.semesters.length + 1;
     const newSem = {
         id: `sem-${Date.now()}`,
@@ -366,9 +347,14 @@ addSemesterBtn.addEventListener('click', () => {
     showToast('New semester added successfully', 'success');
 });
 
-// Add Simulated Semester Event Listener
 addSimulatedSemBtn.addEventListener('click', () => {
-    const totalSems = state.semesters.length + simulatedSemesters.length + 1;
+    const totalSemsCount = state.semesters.length + simulatedSemesters.length;
+    if (totalSemsCount >= 8) {
+        showToast('Maximum limit of 8 semesters reached', 'error');
+        return;
+    }
+
+    const totalSems = totalSemsCount + 1;
     const newSimSem = {
         id: `sim-sem-${Date.now()}`,
         name: `Sim Semester ${totalSems}`,
@@ -382,9 +368,7 @@ addSimulatedSemBtn.addEventListener('click', () => {
     showToast('Simulated semester injected', 'success');
 });
 
-// Dynamic Container Event Delegation for performance
 semestersContainer.addEventListener('click', (e) => {
-    // Delete Semester
     const deleteSemBtn = e.target.closest('.delete-sem-btn');
     if (deleteSemBtn) {
         const semId = deleteSemBtn.dataset.semId;
@@ -401,7 +385,6 @@ semestersContainer.addEventListener('click', (e) => {
         return;
     }
     
-    // Add Course
     const addCourseBtn = e.target.closest('.add-course-btn');
     if (addCourseBtn) {
         const semId = addCourseBtn.dataset.semId;
@@ -422,7 +405,6 @@ semestersContainer.addEventListener('click', (e) => {
         return;
     }
     
-    // Delete Course
     const deleteCourseBtn = e.target.closest('.delete-course-btn');
     if (deleteCourseBtn) {
         const semId = deleteCourseBtn.dataset.semId;
@@ -440,13 +422,11 @@ semestersContainer.addEventListener('click', (e) => {
     }
 });
 
-// Input updates handling
 semestersContainer.addEventListener('input', (e) => {
     const target = e.target;
     const isSim = target.dataset.simulated === 'true';
     const semList = isSim ? simulatedSemesters : state.semesters;
     
-    // Edit Semester Title
     if (target.classList.contains('sem-title-input')) {
         const semId = target.dataset.semId;
         const sem = semList.find(s => s.id === semId);
@@ -457,7 +437,6 @@ semestersContainer.addEventListener('input', (e) => {
         return;
     }
     
-    // Edit Course Name
     if (target.classList.contains('course-name-input')) {
         const semId = target.dataset.semId;
         const courseId = target.dataset.courseId;
@@ -472,7 +451,6 @@ semestersContainer.addEventListener('input', (e) => {
         return;
     }
     
-    // Edit Course Credits
     if (target.classList.contains('course-credits-input')) {
         const semId = target.dataset.semId;
         const courseId = target.dataset.courseId;
@@ -490,7 +468,6 @@ semestersContainer.addEventListener('input', (e) => {
                 course.credits = value;
                 if (!isSim) saveState();
                 
-                // Real-time calculation updating UI immediately
                 const sgpaBadgeVal = document.querySelector(`[data-id="${semId}"] .gpa-val`);
                 if (sgpaBadgeVal) {
                     sgpaBadgeVal.textContent = calculateSGPA(sem).toFixed(2);
@@ -502,7 +479,6 @@ semestersContainer.addEventListener('input', (e) => {
     }
 });
 
-// Grade Select Change event listener
 semestersContainer.addEventListener('change', (e) => {
     const target = e.target;
     if (target.classList.contains('course-grade-select')) {
@@ -518,7 +494,6 @@ semestersContainer.addEventListener('change', (e) => {
                 course.grade = target.value;
                 if (!isSim) saveState();
                 
-                // Real-time calculation updating UI immediately
                 const sgpaBadgeVal = document.querySelector(`[data-id="${semId}"] .gpa-val`);
                 if (sgpaBadgeVal) {
                     sgpaBadgeVal.textContent = calculateSGPA(sem).toFixed(2);
@@ -529,7 +504,6 @@ semestersContainer.addEventListener('change', (e) => {
     }
 });
 
-// What-If Toggle switch event listener
 whatIfToggle.addEventListener('change', (e) => {
     state.isWhatIfActive = e.target.checked;
     saveState();
@@ -539,12 +513,11 @@ whatIfToggle.addEventListener('change', (e) => {
     } else {
         whatIfControls.classList.add('disabled');
         whatIfResults.classList.add('hidden');
-        simulatedSemesters = []; // Clear simulated semesters instantly to avoid overriding actual data
+        simulatedSemesters = [];
     }
     renderSemesters();
 });
 
-// Target CGPA and Future Credits events
 targetCgpaInput.addEventListener('input', () => {
     const val = parseFloat(targetCgpaInput.value);
     if (val < 0 || val > 10) {
@@ -567,7 +540,6 @@ resetBtn.addEventListener('click', () => {
         state = JSON.parse(JSON.stringify(DEFAULT_STATE));
         saveState();
         
-        // Sync checkbox UI
         whatIfToggle.checked = false;
         whatIfControls.classList.add('disabled');
         whatIfResults.classList.add('hidden');
@@ -580,7 +552,6 @@ resetBtn.addEventListener('click', () => {
     }
 });
 
-// Initial Run
 renderSemesters();
 if (state.isWhatIfActive) {
     whatIfToggle.checked = true;

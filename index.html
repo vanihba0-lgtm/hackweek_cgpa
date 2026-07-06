@@ -3,22 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎓 CGPA Calculator & What-If Simulator | HackWeek 2026</title>
-    <!-- Google Fonts: Outfit & Inter -->
+    <title>CGPA Calculator & What-If Simulator | HackWeek 2026</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Ambient Background Gradients -->
     <div class="bg-glow-1"></div>
     <div class="bg-glow-2"></div>
 
     <div class="app-container">
-        <!-- Sidebar / Header Area -->
         <header class="app-header">
             <div class="brand">
                 <div class="logo-icon">
@@ -36,9 +32,7 @@
             </div>
         </header>
 
-        <!-- Main Dashboard Layout -->
         <main class="dashboard-grid">
-            <!-- Left Side: Calculation & Semesters Input -->
             <section class="dashboard-card main-panel">
                 <div class="panel-header">
                     <h2><i class="fa-solid fa-book-open"></i> Academic Semesters</h2>
@@ -47,14 +41,10 @@
                     </button>
                 </div>
 
-                <div id="semesters-container" class="semesters-list">
-                    <!-- Dynamic Semesters loaded here -->
-                </div>
+                <div id="semesters-container" class="semesters-list"></div>
             </section>
 
-            <!-- Right Side: Stats & Projections -->
             <section class="sidebar-panel">
-                <!-- Summary Card -->
                 <div class="dashboard-card summary-card">
                     <h3>Overall Performance</h3>
                     <div class="cgpa-gauge-container">
@@ -82,7 +72,6 @@
                     </div>
                 </div>
 
-                <!-- What-If Simulator Card -->
                 <div class="dashboard-card what-if-card">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-wand-magic-sparkles"></i> What-If Simulator</h3>
@@ -115,16 +104,13 @@
                             </div>
                         </div>
                         
-                        <div id="what-if-results" class="what-if-results hidden">
-                            <!-- Simulated Results Output -->
-                        </div>
+                        <div id="what-if-results" class="what-if-results hidden"></div>
                     </div>
                 </div>
             </section>
         </main>
     </div>
 
-    <!-- Notification Toast -->
     <div id="toast-container" class="toast-container"></div>
 
     <script src="app.js"></script>
