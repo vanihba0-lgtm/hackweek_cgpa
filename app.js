@@ -128,7 +128,7 @@ const simulatedContainer = document.getElementById('simulated-semesters-containe
 const displayCGPA = document.getElementById('display-cgpa');
 const displayCredits = document.getElementById('display-credits');
 const displaySemestersCount = document.getElementById('display-semesters-count');
-const gaugeProgress = document.getElementById('gauge-progress');
+const circularProgress = document.getElementById('circular-progress');
 const addSemesterBtn = document.getElementById('add-semester-btn');
 const addSimulatedSemBtn = document.getElementById('add-simulated-sem-btn');
 const targetCgpaInput = document.getElementById('target-cgpa');
@@ -191,9 +191,16 @@ function updateStatsUI() {
     displayCredits.textContent = data.totalCredits;
     displaySemestersCount.textContent = data.semestersCount;
 
-    const maxOffset = 339.29;
     const percentage = data.cgpa / 10;
-    gaugeProgress.style.strokeDashoffset = maxOffset - (percentage * maxOffset);
+    
+    // Add small delay to trigger the CSS transition animation on load
+    setTimeout(() => {
+        const circularProgress = document.getElementById('circular-progress');
+        if (circularProgress) {
+            const degrees = Math.min(percentage * 360, 360);
+            circularProgress.style.background = `conic-gradient(var(--primary) ${degrees}deg, var(--bg-elevated) 0deg)`;
+        }
+    }, 50);
 
     updateWhatIfUI();
 }
@@ -541,7 +548,7 @@ if (yearSelect) {
         const newYear = parseInt(e.target.value);
         state.year = newYear.toString();
         const targetSemesters = newYear * 2;
-        
+
         if (state.semesters.length < targetSemesters) {
             const currentCount = state.semesters.length;
             for (let i = currentCount; i < targetSemesters; i++) {
@@ -562,7 +569,7 @@ if (yearSelect) {
                 return;
             }
         }
-        
+
         saveState();
         renderSemesters();
         updateStatsUI();

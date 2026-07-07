@@ -68,15 +68,11 @@
                 <section class="sidebar-panel">
                     <div class="dashboard-card summary-card">
                         <h3>Overall Performance</h3>
-                        <div class="cgpa-gauge-container">
-                            <div class="cgpa-gauge">
-                                <svg class="gauge-svg" viewBox="0 0 120 120">
-                                    <circle class="gauge-bg" cx="60" cy="60" r="54"></circle>
-                                    <circle id="gauge-progress" class="gauge-value" cx="60" cy="60" r="54"></circle>
-                                </svg>
-                                <div class="gauge-text">
+                        <div class="cgpa-circular-container">
+                            <div class="circular-progress" id="circular-progress">
+                                <div class="inner-circle">
+                                    <span class="cgpa-label">Current CGPA</span>
                                     <span id="display-cgpa" class="cgpa-number">0.00</span>
-                                    <span class="cgpa-label">CGPA</span>
                                 </div>
                             </div>
                         </div>
