@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CGPA Calculator & What-If Simulator | HackWeek 2026</title>
+    <title>CGPA CALCI — CGPA Calculator & What-If Simulator</title>
+    <meta name="description" content="Calculate your CGPA and simulate future academic scenarios with CGPA CALCI's powerful What-If Simulator.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -18,97 +19,153 @@
         <header class="app-header">
             <div class="brand">
                 <div class="logo-icon">
-                    <i class="fa-solid fa-graduation-cap"></i>
+                    <i class="fa-solid fa-calculator"></i>
                 </div>
                 <div>
-                    <h1>Academia Pro</h1>
+                    <h1>CGPA CALCI</h1>
                     <p class="subtitle">CGPA Calculator & What-If Simulator</p>
                 </div>
             </div>
             <div class="header-actions">
-                <button id="reset-btn" class="btn btn-danger-outline" title="Reset All">
+                <div class="year-selector" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <label for="year-select" style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">Year:</label>
+                    <select id="year-select" class="input-field" style="padding: 0.4rem 1.75rem 0.4rem 0.75rem; width: auto; font-size: 0.8rem; height: 32px;">
+                        <option value="1">1st Year</option>
+                        <option value="2">2nd Year</option>
+                        <option value="3">3rd Year</option>
+                        <option value="4">4th Year</option>
+                    </select>
+                </div>
+                <button id="reset-btn" class="btn btn-danger-outline" title="Reset All" style="height: 32px; padding: 0 0.75rem;">
                     <i class="fa-solid fa-trash-can"></i> <span>Reset</span>
                 </button>
             </div>
         </header>
 
-        <main class="dashboard-grid">
-            <section class="dashboard-card main-panel">
-                <div class="panel-header">
-                    <h2><i class="fa-solid fa-book-open"></i> Academic Semesters</h2>
-                    <button id="add-semester-btn" class="btn btn-primary">
-                        <i class="fa-solid fa-plus"></i> Add Semester
-                    </button>
+        <!-- Tab Navigation -->
+        <nav class="nav-tabs" id="nav-tabs">
+            <button class="nav-tab active" data-tab="calculator">
+                <i class="fa-solid fa-calculator"></i> Calculator
+            </button>
+            <button class="nav-tab" data-tab="whatif">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> What-If Simulator
+            </button>
+        </nav>
+
+        <!-- Page 1: Calculator -->
+        <div class="tab-page active" id="page-calculator">
+            <main class="dashboard-grid">
+                <section class="dashboard-card main-panel">
+                    <div class="panel-header">
+                        <h2><i class="fa-solid fa-book-open"></i> Academic Semesters</h2>
+                        <button id="add-semester-btn" class="btn btn-primary">
+                            <i class="fa-solid fa-plus"></i> Add Semester
+                        </button>
+                    </div>
+                    <div id="semesters-container" class="semesters-list"></div>
+                </section>
+
+                <section class="sidebar-panel">
+                    <div class="dashboard-card summary-card">
+                        <h3>Overall Performance</h3>
+                        <div class="cgpa-gauge-container">
+                            <div class="cgpa-gauge">
+                                <svg class="gauge-svg" viewBox="0 0 120 120">
+                                    <circle class="gauge-bg" cx="60" cy="60" r="54"></circle>
+                                    <circle id="gauge-progress" class="gauge-value" cx="60" cy="60" r="54"></circle>
+                                </svg>
+                                <div class="gauge-text">
+                                    <span id="display-cgpa" class="cgpa-number">0.00</span>
+                                    <span class="cgpa-label">CGPA</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stats-row">
+                            <div class="stat-box">
+                                <span class="stat-title">Total Credits</span>
+                                <span id="display-credits" class="stat-value">0</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-title">Semesters</span>
+                                <span id="display-semesters-count" class="stat-value">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <!-- Page 2: What-If Simulator -->
+        <div class="tab-page" id="page-whatif">
+            <div class="whatif-page-grid">
+                <div class="whatif-sim-panel">
+                    <div class="dashboard-card">
+                        <div class="panel-header">
+                            <h2><i class="fa-solid fa-flask-vial"></i> Simulated Semesters</h2>
+                            <button id="add-simulated-sem-btn" class="btn btn-primary">
+                                <i class="fa-solid fa-plus"></i> Add Semester
+                            </button>
+                        </div>
+                        <div id="simulated-semesters-container" class="semesters-list"></div>
+                    </div>
                 </div>
 
-                <div id="semesters-container" class="semesters-list"></div>
-            </section>
+                <div class="whatif-analysis">
+                    <div class="dashboard-card projected-cgpa-display">
+                        <span class="projected-label">Projected CGPA</span>
+                        <span id="projected-cgpa" class="projected-value">—</span>
+                        <span id="projected-sub" class="projected-sub">Add simulated semesters to see projection</span>
+                    </div>
 
-            <section class="sidebar-panel">
-                <div class="dashboard-card summary-card">
-                    <h3>Overall Performance</h3>
-                    <div class="cgpa-gauge-container">
-                        <div class="cgpa-gauge">
-                            <svg class="gauge-svg" viewBox="0 0 120 120">
-                                <circle class="gauge-bg" cx="60" cy="60" r="54"></circle>
-                                <circle id="gauge-progress" class="gauge-value" cx="60" cy="60" r="54"></circle>
-                            </svg>
-                            <div class="gauge-text">
-                                <span id="display-cgpa" class="cgpa-number">0.00</span>
-                                <span class="cgpa-label">CGPA</span>
+                    <div class="dashboard-card">
+                        <h3 style="font-family: var(--font-heading); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fa-solid fa-chart-column" style="color: var(--primary);"></i> Comparison
+                        </h3>
+                        <div id="whatif-comparison">
+                            <div class="comparison-row">
+                                <span class="label">Current CGPA</span>
+                                <span id="comp-current-cgpa" class="value">0.00</span>
+                            </div>
+                            <div class="comparison-row">
+                                <span class="label">Projected CGPA</span>
+                                <span id="comp-projected-cgpa" class="value neutral">—</span>
+                            </div>
+                            <div class="comparison-row">
+                                <span class="label">Change</span>
+                                <span id="comp-change" class="value neutral">—</span>
+                            </div>
+                            <div class="comparison-row">
+                                <span class="label">Simulated Credits</span>
+                                <span id="comp-sim-credits" class="value">0</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="stats-row">
-                        <div class="stat-box">
-                            <span class="stat-title">Total Credits</span>
-                            <span id="display-credits" class="stat-value">0</span>
-                        </div>
-                        <div class="stat-box">
-                            <span class="stat-title">Semesters</span>
-                            <span id="display-semesters-count" class="stat-value">0</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="dashboard-card what-if-card">
-                    <div class="card-header">
-                        <h3><i class="fa-solid fa-wand-magic-sparkles"></i> What-If Simulator</h3>
-                        <label class="switch">
-                            <input type="checkbox" id="what-if-toggle">
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                    <p class="description">Project your potential final CGPA by simulating grades for future semesters temporarily without changing actual data.</p>
-                    
-                    <div id="what-if-controls" class="what-if-controls disabled">
-                        <button id="add-simulated-sem-btn" class="btn btn-secondary" style="width: 100%; justify-content: center; margin-bottom: 1rem;">
-                            <i class="fa-solid fa-plus"></i> Add Simulated Semester
-                        </button>
-                        
+                    <div class="dashboard-card">
+                        <h3 style="font-family: var(--font-heading); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fa-solid fa-bullseye" style="color: var(--primary);"></i> Target Goal Calculator
+                        </h3>
                         <div class="simulation-inputs">
                             <div class="input-group">
-                                <label for="target-cgpa">Target CGPA Goal</label>
+                                <label for="target-cgpa">Target CGPA</label>
                                 <div class="input-wrapper">
-                                    <input type="number" id="target-cgpa" min="0" max="10" step="0.01" placeholder="e.g. 8.50">
+                                    <input type="number" id="target-cgpa" class="input-field" min="0" max="10" step="0.01" placeholder="e.g. 8.50">
                                     <i class="fa-solid fa-bullseye"></i>
                                 </div>
                             </div>
                             <div class="input-group">
                                 <label for="future-credits">Future Credits to Take</label>
                                 <div class="input-wrapper">
-                                    <input type="number" id="future-credits" min="1" step="1" placeholder="e.g. 24">
+                                    <input type="number" id="future-credits" class="input-field" min="1" step="1" placeholder="e.g. 24">
                                     <i class="fa-solid fa-clock"></i>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div id="what-if-results" class="what-if-results hidden"></div>
+                        <div id="what-if-results" class="what-if-results hidden" style="margin-top: 1rem;"></div>
                     </div>
                 </div>
-            </section>
-        </main>
+            </div>
+        </div>
     </div>
 
     <div id="toast-container" class="toast-container"></div>
