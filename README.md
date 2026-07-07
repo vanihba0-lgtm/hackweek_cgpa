@@ -3,15 +3,16 @@
 A lightweight, efficient, and user-friendly web application to help students calculate their Semester GPA and cumulative CGPA, featuring a "What-If" simulator for future academic planning.
 
 ## Features
-- Real-time Calculation: Instant updates for SGPA as you input grades and credits.
-- "What-If" Simulator: Project your potential final CGPA by simulating grades for future semesters.
-- Dynamic Input: Add/remove subjects and semesters easily.
-- Responsive UI: Works seamlessly on both desktop and mobile browsers.
+- **Real-time Calculation**: Instant updates for SGPA as you input grades and credits.
+- **"What-If" Simulator**: Project your potential final CGPA by simulating grades for future semesters.
+- **Target Goal Calculator**: Discover exactly what GPA you need in future semesters to hit your dream CGPA target.
+- **Dynamic Input**: Add/remove subjects and semesters easily.
+- **Modern UI**: Dark theme aesthetic featuring a sleek circular yellow progress gauge and smooth animations.
 
 ## Technologies Used
-- HTML5: Semantic structure.
-- CSS3: Modern layout (Flexbox/Grid), responsive design, and intuitive styling.
-- Vanilla JavaScript: Core calculation logic, dynamic DOM manipulation, and state management.
+- **HTML5**: Semantic structure.
+- **CSS3**: Modern layout (Flexbox/Grid), responsive design, custom variables, conic gradients, and intuitive styling.
+- **Vanilla JavaScript**: Core calculation logic, dynamic DOM manipulation, and state management.
 
 ## Getting Started
 ### Prerequisites
